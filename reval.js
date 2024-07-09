@@ -90,7 +90,12 @@ function getNewSession() {
                     return [4 /*yield*/, axios.get(url, { headers: headers, httpsAgent: httpsAgent })];
                 case 1:
                     response = _a.sent();
+                    // r$ console.log(response);
+                    // r$ console.log('this is the ersponse');
                     $ = cheerio.load(response.data);
+                    // r$ console.log($('body').html());
+                    console.log($.html());
+
                     token = $("input[name=Token]").attr("value");
                     img_url = "https://results.vtu.ac.in" + $("img[alt='CAPTCHA code']").attr("src");
                     post_payload.Token = token || "";
@@ -103,8 +108,14 @@ function getNewSession() {
                         "Accept-Encoding": "gzip, deflate, br",
                         Connection: "keep-alive",
                     };
+                    console.log('here is the image headers ',img_headers["Cookie"])
+                    
                     img_headers["Cookie"] = response.headers["set-cookie"][0].replace("; path=/; secure; HttpOnly", "");
+                    // console.log('here is the image headers ',img_headers["Cookie"])
+                    // console.log('this is the post_heaser',post_headers["Cookie"])
+                    
                     post_headers["Cookie"] = img_headers["Cookie"];
+                    console.log('this is the post_heaser',post_headers["Cookie"])
                     console.log(img_url);
                     return [4 /*yield*/, axios.get(img_url, {
                             headers: img_headers,
@@ -147,6 +158,8 @@ function getNewSession() {
 }
 function getResult(USN, Batch, Sem, Section) {
     return __awaiter(this, void 0, void 0, function () {
+        console.log('what is this value')
+        console.log('oye_hoye',post_payload.lns);
         var url, data, config, res, results_1, $_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
@@ -184,7 +197,7 @@ function getResult(USN, Batch, Sem, Section) {
                     console.log("IP Blocked");
                     return [3 /*break*/, 10];
                 case 7:
-                    if (!res.data.includes("Semester : 1")) return [3 /*break*/, 8];
+                    if (!res.data.includes("Semester : 5")) return [3 /*break*/, 8];
                     results_1 = [];
                     $_1 = cheerio.load(res.data);
                     $_1(".divTable").each(function (idx, v) {
@@ -257,11 +270,12 @@ function getResult(USN, Batch, Sem, Section) {
                 console.log("".concat(json1.indexOf(student) + 1, "/").concat(json1.length, " - Name: ").concat(student.USN, " - Section: ").concat(student.Section));
                 _a.label = 4;
             case 4:
+                
                 _a.trys.push([4, 6, , 7]);
                 return [4 /*yield*/, getResult(student.USN, parseInt(student.Batch), parseInt(student.Sem), student.Section)];
             case 5:
                 res = _a.sent();
-                console.log(res);
+                console.log('what is this',JSON.stringify(res));
                 stream = fs.createWriteStream("result13.json", { flags: 'a' });
                 stream.write(JSON.stringify(res) + "\n");
                 console.log("Pushed result");
