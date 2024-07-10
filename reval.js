@@ -41,6 +41,67 @@ var axios = require("axios").default;
 var https = require("https");
 var Path = require("path");
 var csv = require("csvtojson");
+const xlsx = require('xlsx');
+
+
+
+async function fetchResultsFromFile(filePath) {
+    try {
+        const fileType = filePath.split('.').pop().toLowerCase();
+        console.log('printing file type ',fileType)
+        let students = [];
+
+        if (fileType === 'xlsx' || fileType === 'xls') {
+            students = readExcel(filePath);
+        } else if (fileType === 'csv') {
+            students = await readCSV(filePath);
+        } else {
+            throw new Error('Unsupported file type');
+        }
+
+        const results = [];
+        for (const student of students) {
+            const { USN, Section, Batch, Sem } = student;
+            try {
+                const csvRow = `${USN},${Section},${Batch},${Sem}\n`;
+
+                // Append the CSV row to the file
+                fs.appendFileSync('E:/mini/resnal-2024-mahi/new_1st_sem_2023.csv', csvRow);
+               
+            } catch (error) {
+                console.error(`Error fetching results for ${USN}: ${error.message}`);
+            }
+        }
+
+        const outputFile = path.join(__dirname, 'all_results.json');
+        fs.writeFileSync(outputFile, JSON.stringify(results, null, 2));
+        console.log('Results fetched and saved successfully.');
+    } catch (error) {
+        console.error(`Error processing file: ${error.message}`);
+    }
+}
+
+function readExcel(filePath) {
+    const workbook = xlsx.readFile(filePath);
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    console.log('printing workbook ',xlsx.utils.sheet_to_json(sheet));
+    return xlsx.utils.sheet_to_json(sheet);
+}
+
+function readCSV(filePath) {
+    return new Promise((resolve, reject) => {
+        const results = [];
+        fs.createReadStream(filePath)
+            .pipe(csvParser())
+            .on('data', (data) => results.push(data))
+            .on('end', () => resolve(results))
+            .on('error', (error) => reject(error));
+    });
+}
+
+
+
 //const __dirname="./"
 var readLine = require("readline");
 var fs = require("fs");
@@ -94,7 +155,7 @@ function getNewSession() {
                     // r$ console.log('this is the ersponse');
                     $ = cheerio.load(response.data);
                     // r$ console.log($('body').html());
-                    console.log($.html());
+                    // console.log($.html());
 
                     token = $("input[name=Token]").attr("value");
                     img_url = "https://results.vtu.ac.in" + $("img[alt='CAPTCHA code']").attr("src");
@@ -296,3 +357,9 @@ function getResult(USN, Batch, Sem, Section) {
         }
     });
 }); })();
+
+
+
+//updated code for adding csv or excel file
+const filePath = 'E:/mini/resnal-2024-mahi/excelfiles/Book1.xlsx'; // Update with your file path
+fetchResultsFromFile(filePath);
